@@ -1,0 +1,107 @@
+<mujoco model="cart_double_inverted_pendulum">
+
+    <compiler angle="radian" inertiafromgeom="true"/>
+
+    <option gravity="0 0 -9.81"
+            timestep="0.005"
+            integrator="RK4"/>
+
+    <default>
+        <joint damping="0.05" armature="0.01"/>
+        <geom density="1000" friction="1 0.1 0.1" contype="0" conaffinity="0"/>
+        <velocity ctrllimited="true" ctrlrange="-3 3"/>
+    </default>
+
+    <worldbody>
+        <!-- Rail (horizontal, along X axis) -->
+        <geom name="rail"
+              type="capsule"
+              pos="0 0 0"
+              quat="0.707 0 0.707 0"
+              size="0.02 2"
+              rgba="0.3 0.3 0.7 1"/>
+
+        <!-- Cart -->
+        <body name="cart" pos="0 0 0">
+            <joint name="slider"
+                   type="slide"
+                   axis="1 0 0"
+                   range="-2 2"
+                   damping="0.5"/>
+
+            <geom name="cart_geom"
+                  type="box"
+                  size="0.12 0.08 0.05"
+                  rgba="0 0 1 1"
+                  mass="1.0"/>
+
+
+            <!-- First pole — attached at cart center, rotates around Y axis -->
+            <body name="pole1" pos="0 0 0">
+                <joint name="hinge1"
+                       type="hinge"
+                       axis="0 1 0"
+                       limited="false"
+                       damping="0.01"/>
+
+                <geom name="pole1_geom"
+                      type="capsule"
+                      fromto="0 0 0 0 0 0.6"
+                      size="0.03"
+                      mass="0.2"
+                      rgba="0 0.7 0.7 1"/>
+
+                <!-- Second pole — attached at tip of pole1 -->
+                <body name="pole2" pos="0 0 0.6">
+                    <joint name="hinge2"
+                           type="hinge"
+                           axis="0 1 0"
+                           limited="false"
+                           damping="0.01"/>
+
+                    <geom name="pole2_geom"
+                          type="capsule"
+                          fromto="0 0 0 0 0 0.6"
+                          size="0.025"
+                          mass="0.15"
+                          rgba="0.7 0 0.7 1"/>
+
+                    <site name="tip" pos="0 0 0.6" size="0.015"/>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <!-- VELOCITY CONTROL on the cart slider -->
+    <actuator>
+        <velocity name="cart_velocity_a"
+                  joint="slider"
+                  kv="10"
+                  ctrlrange="-5 5"/>
+    </actuator>
+
+    <sensor>
+        <!-- Cart position and velocity -->
+        <jointpos  name="cart_pos"   joint="slider"/>
+        <jointvel  name="cart_vel"   joint="slider"/>
+        <!-- Pole 1 angle and angular velocity -->
+        <jointpos  name="hinge1_pos" joint="hinge1"/>
+        <jointvel  name="hinge1_vel" joint="hinge1"/>
+        <!-- Pole 2 angle and angular velocity -->
+        <jointpos  name="hinge2_pos" joint="hinge2"/>
+        <jointvel  name="hinge2_vel" joint="hinge2"/>
+        <!-- Tip position (world frame) for reward shaping -->
+        <framepos  name="tip_pos"    objtype="site" objname="tip"/>
+    </sensor>
+
+
+    <keyframe>
+        <key name="hanging_down"
+             qpos="0 0 0"
+             qvel="0 0 0"/>
+        <key name="upright"
+             qpos="0 0 0"
+             qvel="0 0 0"/>
+    </keyframe>
+
+</mujoco>
